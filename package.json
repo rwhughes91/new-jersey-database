@@ -1,0 +1,15 @@
+{
+  "name": "new-jersey-database",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robbie Hughes",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^3.5.5",
+    "mongoose": "^5.9.7"
+  }
+}
