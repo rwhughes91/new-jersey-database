@@ -1,0 +1,6 @@
+type Query {
+  lien: Lien!
+}
+type Lien {
+  county: String!
+}

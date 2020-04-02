@@ -1,20 +1,11 @@
-import { ApolloServer, gql } from 'apollo-server';
+import { ApolloServer } from 'apollo-server';
+import { importSchema } from 'graphql-import';
+import dotenv from 'dotenv';
 
-const typeDefs = gql`
-  # Boilerplate
-  type Lien {
-    county: String!
-  }
-  type Query {
-    lien: Lien!
-  }
-`;
+import resolvers from './resolvers';
 
-const resolvers = {
-  Query: {
-    lien: () => ({ county: 'Asbury Park' })
-  }
-};
+dotenv.config();
+const typeDefs = importSchema('./src/schema.graphql');
 
 const server = new ApolloServer({ typeDefs, resolvers });
 
