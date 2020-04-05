@@ -26,6 +26,9 @@ type Query {
     sale_year: Int
     county: String
     address: String
+    skip: Int
+    limit: Int
+    sort: String
   ): [Lien!]!
 }
 type Mutation {
@@ -38,8 +41,8 @@ type Lien {
   county: String!
   year: Int!
   llc: String
-  block: String!
-  lot: String!
+  block: String
+  lot: String
   qualifier: String
   advertisement_number: Int
   mua_number: String
@@ -50,9 +53,9 @@ type Lien {
   longitude: Float
   latitude: Float
   assessed_value: Int
-  tax_amount: Float!
+  tax_amount: Float
   status: String
-  address: String!
+  address: String
   certificate_face_value: Float
   winning_bid_percentage: Int
   premium: Int
