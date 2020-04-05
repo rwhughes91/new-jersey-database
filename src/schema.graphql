@@ -1,6 +1,84 @@
-type Query {
-  lien: Lien!
+enum Status {
+  BANKRUPTCY
+  BANKRUPTCYREDEEMED
+  FORECLOSURE
+  FORECLOSUREREDEEMED
+  NOSUBS
+  OWN
+  REDEEMED
+  OPEN
 }
+
+enum By {
+  COUNTY
+  YEAR
+  STATUS
+  SALE_DATE
+}
+
+type Query {
+  getLien(lien_id: Int!): Lien!
+  getLiens(
+    block: String
+    lot: String
+    qualifier: String
+    certificate_number: String
+    sale_year: Int
+    county: String
+    address: String
+  ): [Lien!]!
+}
+type Mutation {
+  updateLienStatus(lien_id: Int!, status: Status!): Lien!
+}
+
 type Lien {
+  _id: ID!
+  lien_id: Int!
   county: String!
+  year: Int!
+  llc: String
+  block: String!
+  lot: String!
+  qualifier: String
+  advertisement_number: Int
+  mua_number: String
+  certificate_number: String
+  lien_type: String
+  list_item: String
+  current_owner: String
+  longitude: Float
+  latitude: Float
+  assessed_value: Int
+  tax_amount: Float!
+  status: String
+  address: String!
+  certificate_face_value: Float
+  winning_bid_percentage: Int
+  premium: Int
+  sale_date: String
+  recording_fee: Int
+  recording_date: String
+  search_fee: Int
+  year_end_penalty: Int
+  flat_rate: Float
+  cert_int: Int
+  total_subs_paid: Float
+  total_cash_out: Float
+  total_cash_received: Float
+  total_principal_paid: Float
+  total_actual_interest: Float
+  total_legal_fees: Float
+  total_principal_balance: Float
+  notes: String
+  redemption_date: String
+  redemption_amount: Float
+  subs: [Sub!]!
+}
+
+type Sub {
+  _id: ID!
+  sub_type: String
+  sub_date: String!
+  amount: Float!
 }
