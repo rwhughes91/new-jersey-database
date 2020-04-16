@@ -9,13 +9,6 @@ enum Status {
   OPEN
 }
 
-enum By {
-  COUNTY
-  YEAR
-  STATUS
-  SALE_DATE
-}
-
 type Query {
   getLien(lien_id: Int!): Lien!
   getLiens(
@@ -29,10 +22,16 @@ type Query {
     skip: Int
     limit: Int
     sort: String
-  ): [Lien!]!
+  ): LienData!
 }
+
 type Mutation {
   updateLienStatus(lien_id: Int!, status: Status!): Lien!
+}
+
+type LienData {
+  count: Int!
+  liens: [Lien!]!
 }
 
 type Lien {

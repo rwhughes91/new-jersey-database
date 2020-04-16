@@ -1,5 +1,5 @@
 import Lien from '../models/lien';
-import { startSession } from 'mongoose';
+import { Promise } from 'bluebird';
 
 const Query = {
   getLien: async (parent, { lien_id }, context, info) => {
@@ -18,7 +18,7 @@ const Query = {
       address,
       skip,
       limit,
-      sort
+      sort,
     },
     context,
     info
@@ -34,18 +34,31 @@ const Query = {
     if (certificate_number) {
       query.certificate_number = {
         $regex: `.*${certificate_number}.*`,
-        $options: 'i'
+        $options: 'i',
       };
     }
     if (sale_year) {
       query.sale_date = {
         $gte: new Date(sale_year, 1, 1),
-        $lte: new Date(sale_year, 12, 31)
+        $lte: new Date(sale_year, 12, 31),
       };
     }
-    const liens = await Lien.find(query, null, { skip, limit, sort });
-    return liens;
-  }
+    const schema = Lien.find(query);
+    const queryTemplate = schema.toConstructor();
+    // const liens = await Lien.find(query)
+    //   .sort(sort)
+    //   .skip(skip)
+    //   .limit(limit)
+    //   .exec();
+    // return liens;
+    return Promise.join(
+      schema.count().exec(),
+      queryTemplate().sort(sort).skip(skip).limit(limit),
+      (count, liens) => {
+        return { count, liens };
+      }
+    );
+  },
 };
 
 export default Query;
