@@ -45,14 +45,8 @@ const Query = {
     }
     const schema = Lien.find(query);
     const queryTemplate = schema.toConstructor();
-    // const liens = await Lien.find(query)
-    //   .sort(sort)
-    //   .skip(skip)
-    //   .limit(limit)
-    //   .exec();
-    // return liens;
     return Promise.join(
-      schema.count().exec(),
+      schema.countDocuments().exec(),
       queryTemplate().sort(sort).skip(skip).limit(limit),
       (count, liens) => {
         return { count, liens };
