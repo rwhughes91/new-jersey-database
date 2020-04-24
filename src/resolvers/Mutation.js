@@ -2,7 +2,6 @@ import Lien from '../models/lien';
 
 const Mutation = {
   updateLienStatus: async (parent, { lien_id, status }, context, info) => {
-    const lien = await Lien.findOne({ lien_id });
     switch (status) {
       case 'BANKRUPTCYREDEEMED':
         status = 'BANKRUPTCY/REDEEMED';
@@ -17,10 +16,40 @@ const Mutation = {
         status = null;
         break;
     }
-    lien.status = status;
-    const newLien = await lien.save();
-    return newLien;
-  }
+    const updatedLien = await Lien.findOneAndUpdate(
+      { lien_id },
+      { status },
+      { new: true }
+    );
+    return updatedLien;
+  },
+  updateLien: async (parent, { lien_id, payload }, context, info) => {
+    if (payload.status) {
+      let { status } = payload;
+      switch (status) {
+        case 'BANKRUPTCYREDEEMED':
+          status = 'BANKRUPTCY/REDEEMED';
+          break;
+        case 'FORECLOSUREREDEEMED':
+          status = 'FORECLOSURE/REDEEMED';
+          break;
+        case 'NOSUBS':
+          status = 'NO-SUBS';
+          break;
+        case 'OPEN':
+          status = null;
+          break;
+      }
+      payload.status = status;
+    }
+    const lien = await Lien.find({ lien_id });
+    const updatedLien = await Lien.findOneAndUpdate(
+      { lien_id },
+      { ...payload },
+      { new: true }
+    );
+    return updatedLien;
+  },
 };
 
 export default Mutation;

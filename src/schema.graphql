@@ -19,6 +19,7 @@ type Query {
     sale_year: Int
     county: String
     address: String
+    status: Status
     skip: Int
     limit: Int
     sort: String
@@ -27,6 +28,7 @@ type Query {
 
 type Mutation {
   updateLienStatus(lien_id: Int!, status: Status!): Lien!
+  updateLien(lien_id: Int!, payload: LienUpdateData!): Lien!
 }
 
 type LienData {
@@ -81,6 +83,24 @@ type Lien {
 type Sub {
   _id: ID!
   sub_type: String
-  sub_date: String!
-  amount: Float!
+  sub_date: String
+  amount: Float
+}
+
+input LienUpdateData {
+  recording_fee: Int
+  recording_date: String
+  redemption_date: String
+  redemption_amount: Float
+  winning_bid_percentage: Int
+  search_fee: Int
+  year_end_penalty: Int
+  status: Status
+  notes: String
+}
+
+input SubUpdateData {
+  sub_type: String
+  sub_date: String
+  amount: Float
 }

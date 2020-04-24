@@ -16,6 +16,7 @@ const Query = {
       sale_year,
       county,
       address,
+      status,
       skip,
       limit,
       sort,
@@ -30,6 +31,24 @@ const Query = {
     if (qualifier) query.qualifier = { $regex: `^${qualifier}`, $options: 'i' };
     if (address) query.address = { $regex: `.*${address}.*`, $options: 'i' };
     if (county) query.county = { $regex: `.*${county}.*`, $options: 'i' };
+    if (status) {
+      switch (status) {
+        case 'BANKRUPTCYREDEEMED':
+          status = 'BANKRUPTCY/REDEEMED';
+          break;
+        case 'FORECLOSUREREDEEMED':
+          status = 'FORECLOSURE/REDEEMED';
+          break;
+        case 'NOSUBS':
+          status = 'NO-SUBS';
+          break;
+        case 'OPEN':
+          status = null;
+          break;
+      }
+      query.status = status;
+    }
+
     // Sale Information
     if (certificate_number) {
       query.certificate_number = {
