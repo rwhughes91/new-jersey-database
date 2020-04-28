@@ -72,6 +72,32 @@ const Query = {
       }
     );
   },
+  getSubBatch: async (parent, { county }, context, info) => {
+    const batchDates = await Lien.find({ county }).distinct('subs.sub_date');
+    return batchDates;
+  },
+  getLiensFromSubDate: async (
+    parent,
+    { date, county, sort, skip, limit },
+    context,
+    info
+  ) => {
+    const query = {
+      'subs.sub_date': date,
+    };
+    if (county) {
+      query.county = county;
+    }
+    const schema = Lien.find(query);
+    const queryTemplate = schema.toConstructor();
+    return Promise.join(
+      schema.countDocuments().exec(),
+      queryTemplate().sort(sort).skip(skip).limit(limit),
+      (count, liens) => {
+        return { count, liens };
+      }
+    );
+  },
 };
 
 export default Query;

@@ -24,6 +24,14 @@ type Query {
     limit: Int
     sort: String
   ): LienData!
+  getSubBatch(county: String!): [String!]!
+  getLiensFromSubDate(
+    date: String!
+    county: String
+    sort: String
+    skip: Int
+    limit: Int
+  ): SubData!
 }
 
 type Mutation {
@@ -32,6 +40,11 @@ type Mutation {
 }
 
 type LienData {
+  count: Int!
+  liens: [Lien!]!
+}
+
+type SubData {
   count: Int!
   liens: [Lien!]!
 }

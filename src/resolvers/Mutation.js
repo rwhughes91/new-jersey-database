@@ -42,7 +42,7 @@ const Mutation = {
       }
       payload.status = status;
     }
-    const lien = await Lien.find({ lien_id });
+    console.log(payload);
     const updatedLien = await Lien.findOneAndUpdate(
       { lien_id },
       { ...payload },
