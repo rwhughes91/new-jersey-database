@@ -97,7 +97,7 @@ type Sub {
   _id: ID!
   sub_type: String
   sub_date: String
-  amount: Float
+  total: Float
 }
 
 input LienUpdateData {
