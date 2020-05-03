@@ -26,6 +26,7 @@ type Query {
   ): LienData!
   getSubBatch(county: String!): [String!]!
   getLiensFromSubDate(date: String!, county: String!): [FlatLien!]!
+  getOpenLiens(county: String!): [Lien!]!
 }
 
 type Mutation {

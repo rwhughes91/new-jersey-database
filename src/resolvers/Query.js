@@ -103,6 +103,13 @@ const Query = {
     ]);
     return response;
   },
+  getOpenLiens: async (parent, { county }, context, info) => {
+    const liens = await Lien.find({
+      county,
+      status: { $in: [null, 'foreclosure', 'bankruptcy'] },
+    });
+    return liens;
+  },
 };
 
 export default Query;
