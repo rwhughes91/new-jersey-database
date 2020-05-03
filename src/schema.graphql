@@ -25,26 +25,21 @@ type Query {
     sort: String
   ): LienData!
   getSubBatch(county: String!): [String!]!
-  getLiensFromSubDate(
-    date: String!
-    county: String
-    sort: String
-    skip: Int
-    limit: Int
-  ): SubData!
+  getLiensFromSubDate(date: String!, county: String!): [FlatLien!]!
 }
 
 type Mutation {
   updateLienStatus(lien_id: Int!, status: Status!): Lien!
   updateLien(lien_id: Int!, payload: LienUpdateData!): Lien!
+  updateSubAmount(
+    lien_id: Int!
+    sub_date: String!
+    sub_type: String!
+    amount: Float!
+  ): Sub
 }
 
 type LienData {
-  count: Int!
-  liens: [Lien!]!
-}
-
-type SubData {
   count: Int!
   liens: [Lien!]!
 }
@@ -90,6 +85,18 @@ type Lien {
   notes: String
   redemption_date: String
   redemption_amount: Float
+  subs: [Sub!]!
+}
+
+type FlatLien {
+  lien_id: Int!
+  block: String
+  lot: String
+  qualifier: String
+  certificate_number: String
+  sale_date: String
+  county: String!
+  address: String
   subs: [Sub!]!
 }
 

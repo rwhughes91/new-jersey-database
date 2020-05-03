@@ -42,13 +42,41 @@ const Mutation = {
       }
       payload.status = status;
     }
-    console.log(payload);
     const updatedLien = await Lien.findOneAndUpdate(
       { lien_id },
       { ...payload },
       { new: true }
     );
     return updatedLien;
+  },
+  updateSubAmount: async (
+    parent,
+    { lien_id, sub_date, sub_type, amount },
+    context,
+    info
+  ) => {
+    const date = new Date(parseInt(sub_date));
+    const type = sub_type.toLowerCase();
+    const res = await Lien.findOneAndUpdate(
+      {
+        lien_id,
+        'subs.sub_type': type,
+        'subs.sub_date': date,
+      },
+      { $set: { 'subs.$.total': amount } },
+      { new: true }
+    );
+    let updatedSub = null;
+    if (res && res.subs) {
+      updatedSub = res.subs.find((sub) => {
+        return (
+          sub.total === amount &&
+          sub.sub_type === type &&
+          sub.sub_date.getTime() === date.getTime()
+        );
+      });
+    }
+    return updatedSub;
   },
 };
 

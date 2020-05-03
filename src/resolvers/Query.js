@@ -76,27 +76,32 @@ const Query = {
     const batchDates = await Lien.find({ county }).distinct('subs.sub_date');
     return batchDates;
   },
-  getLiensFromSubDate: async (
-    parent,
-    { date, county, sort, skip, limit },
-    context,
-    info
-  ) => {
-    const query = {
-      'subs.sub_date': date,
-    };
-    if (county) {
-      query.county = county;
-    }
-    const schema = Lien.find(query);
-    const queryTemplate = schema.toConstructor();
-    return Promise.join(
-      schema.countDocuments().exec(),
-      queryTemplate().sort(sort).skip(skip).limit(limit),
-      (count, liens) => {
-        return { count, liens };
-      }
-    );
+  getLiensFromSubDate: async (parent, { date, county }, context, info) => {
+    const filterDate = new Date(parseInt(date));
+    const response = await Lien.aggregate([
+      { $match: { county, 'subs.sub_date': filterDate } },
+      {
+        $project: {
+          _id: 0,
+          lien_id: 1,
+          block: 1,
+          lot: 1,
+          qualifier: 1,
+          certificate_number: 1,
+          sale_date: 1,
+          county: 1,
+          address: 1,
+          subs: {
+            $filter: {
+              input: '$subs',
+              as: 'subs',
+              cond: { $eq: ['$$subs.sub_date', filterDate] },
+            },
+          },
+        },
+      },
+    ]);
+    return response;
   },
 };
 
