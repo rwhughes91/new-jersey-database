@@ -37,7 +37,7 @@ type Mutation {
     sub_date: String!
     sub_type: String!
     amount: Float!
-  ): Sub
+  ): String!
 }
 
 type LienData {
@@ -98,6 +98,7 @@ type FlatLien {
   sale_date: String
   county: String!
   address: String
+  status: String
   subs: [Sub!]!
 }
 

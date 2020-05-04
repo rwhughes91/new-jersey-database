@@ -79,7 +79,15 @@ const Query = {
   getLiensFromSubDate: async (parent, { date, county }, context, info) => {
     const filterDate = new Date(parseInt(date));
     const response = await Lien.aggregate([
-      { $match: { county, 'subs.sub_date': filterDate } },
+      {
+        $match: {
+          county,
+          $or: [
+            { 'subs.sub_date': filterDate },
+            { status: { $in: [null, 'foreclosure', 'bankruptcy'] } },
+          ],
+        },
+      },
       {
         $project: {
           _id: 0,
@@ -91,6 +99,7 @@ const Query = {
           sale_date: 1,
           county: 1,
           address: 1,
+          status: 1,
           subs: {
             $filter: {
               input: '$subs',

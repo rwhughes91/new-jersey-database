@@ -55,28 +55,38 @@ const Mutation = {
     context,
     info
   ) => {
-    const date = new Date(parseInt(sub_date));
+    const date = parseInt(sub_date);
     const type = sub_type.toLowerCase();
-    const res = await Lien.findOneAndUpdate(
-      {
-        lien_id,
-        'subs.sub_type': type,
-        'subs.sub_date': date,
-      },
-      { $set: { 'subs.$.total': amount } },
-      { new: true }
-    );
-    let updatedSub = null;
-    if (res && res.subs) {
-      updatedSub = res.subs.find((sub) => {
-        return (
-          sub.total === amount &&
-          sub.sub_type === type &&
-          sub.sub_date.getTime() === date.getTime()
-        );
-      });
+    const lien = await Lien.findOne({ lien_id });
+    let message;
+    if (amount === 0) {
+      lien.subs = lien.subs.filter(
+        (sub) => sub.sub_type !== type || sub.sub_date.getTime() !== date
+      );
+      message = 'Deleted';
+    } else {
+      const subIndex = lien.subs.findIndex(
+        (sub) => sub.sub_type === type && sub.sub_date.getTime() === date
+      );
+      if (subIndex !== -1) {
+        lien.subs[subIndex].total = amount;
+        message = 'Edited';
+      } else {
+        const sub = {
+          sub_type: type,
+          sub_date: new Date(date),
+          total: amount,
+        };
+        lien.subs.push(sub);
+        message = 'Created';
+      }
     }
-    return updatedSub;
+    try {
+      const res = await lien.save();
+      if (res) return message;
+    } catch (err) {
+      return 'Could not save';
+    }
   },
 };
 
