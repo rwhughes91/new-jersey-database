@@ -1,14 +1,29 @@
-import { ApolloServer } from 'apollo-server';
-import { importSchema } from 'graphql-import';
+import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-
+import { ApolloServer } from 'apollo-server-express';
+import { importSchema } from 'graphql-import';
 import resolvers from './resolvers';
+import cors from 'cors';
+import io from './socket';
+
+import reportRoutes from './routes/reports';
 
 dotenv.config();
 
 const typeDefs = importSchema('./src/schema.graphql');
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({ typeDefs, resolvers, playground: true });
+
+const app = express();
+app.use(cors());
+app.use(reportRoutes);
+app.use((error, req, res, next) => {
+  const { data, message } = error;
+  const status = error.statusCode || 500;
+  res.status(status).json({ message, data });
+});
+
+server.applyMiddleware({ app });
 
 mongoose
   .connect(process.env.DB_URI, {
@@ -16,8 +31,17 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    server.listen().then(({ url }) => {
-      console.log(`🚀  Server ready at ${url}`);
+    const server = app.listen({ port: 4000 });
+    const serverIO = io.init(server);
+    serverIO.on('connection', (socket) => {
+      console.log('Client has been connected');
+      socket.on('getUploadState', () => {
+        const { uploading } = io.getIO();
+        socket.emit('uploadingState', { uploading });
+      });
+      socket.on('disconnect', () => {
+        console.log('Client has been disconnected');
+      });
     });
   })
   .catch((err) => {

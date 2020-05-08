@@ -27,6 +27,7 @@ type Query {
   getSubBatch(county: String!): [String!]!
   getLiensFromSubDate(date: String!, county: String!): [FlatLien!]!
   getOpenLiens(county: String!): [Lien!]!
+  getUploadTemplate: UploadLienTemplate!
 }
 
 type Mutation {
@@ -100,6 +101,65 @@ type FlatLien {
   address: String
   status: String
   subs: [Sub!]!
+}
+
+type UploadLienTemplate {
+  fields: UploadLienFields!
+  data: [UploadLienData!]!
+}
+
+type UploadLienFields {
+  block: String!
+  lot: String!
+  qualifier: String!
+  county: String!
+  address: String!
+  year: String!
+  llc: String!
+  advertisement_number: String!
+  mua_number: String!
+  certificate_number: String!
+  lien_type: String!
+  list_item: String!
+  current_owner: String!
+  longitude: String!
+  latitude: String!
+  assessed_value: String!
+  tax_amount: String!
+  certificate_face_value: String!
+  winning_bid_percentage: String!
+  premium: String!
+  sale_date: String!
+  recording_fee: String!
+  recording_date: String!
+  search_fee: String!
+}
+
+type UploadLienData {
+  block: String
+  lot: String
+  qualifier: String
+  county: String!
+  address: String
+  year: Int!
+  llc: String
+  advertisement_number: Int
+  mua_number: String
+  certificate_number: String
+  lien_type: String
+  list_item: String
+  current_owner: String
+  longitude: Float
+  latitude: Float
+  assessed_value: Int
+  tax_amount: Float
+  certificate_face_value: Float
+  winning_bid_percentage: Int
+  premium: Int
+  sale_date: String
+  recording_fee: Int
+  recording_date: String
+  search_fee: Int
 }
 
 type Sub {

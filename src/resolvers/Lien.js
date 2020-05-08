@@ -1,10 +1,10 @@
 import { toTitleCase } from '../utils/formatters';
 
 const Lien = {
-  county: ({ county }, args, context, info) => {
+  county: ({ county }) => {
     return toTitleCase(county);
   },
-  address: ({ address }, args, context, info) => {
+  address: ({ address }) => {
     return toTitleCase(address);
   },
 };
