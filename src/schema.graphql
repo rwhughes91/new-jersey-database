@@ -20,6 +20,7 @@ type Query {
     county: String
     address: String
     status: Status
+    llc: String
     skip: Int
     limit: Int
     sort: String
@@ -28,6 +29,11 @@ type Query {
   getLiensFromSubDate(date: String!, county: String!): [FlatLien!]!
   getOpenLiens(county: String!): [Lien!]!
   getUploadTemplate: UploadLienTemplate!
+  getTownships: [String!]!
+  getVintages: [String!]!
+  getLLCs: [String!]!
+  getMonthlyRedemptions(year: Int!, month: Int!, county: String): [Lien!]!
+  getMonthlySubPayments(year: Int!, month: Int!, county: String): [Lien!]!
 }
 
 type Mutation {
@@ -74,9 +80,9 @@ type Lien {
   recording_fee: Int
   recording_date: String
   search_fee: Int
-  year_end_penalty: Int
+  year_end_penalty: Float
   flat_rate: Float
-  cert_int: Int
+  cert_int: Float
   total_subs_paid: Float
   total_cash_out: Float
   total_cash_received: Float

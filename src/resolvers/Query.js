@@ -17,6 +17,7 @@ const Query = {
       county,
       address,
       status,
+      llc,
       skip,
       limit,
       sort,
@@ -31,6 +32,7 @@ const Query = {
     if (qualifier) query.qualifier = { $regex: `^${qualifier}`, $options: 'i' };
     if (address) query.address = { $regex: `.*${address}.*`, $options: 'i' };
     if (county) query.county = { $regex: `.*${county}.*`, $options: 'i' };
+    if (llc) query.llc = llc;
     if (status) {
       switch (status) {
         case 'BANKRUPTCYREDEEMED':
@@ -58,8 +60,8 @@ const Query = {
     }
     if (sale_year) {
       query.sale_date = {
-        $gte: new Date(sale_year, 1, 1),
-        $lte: new Date(sale_year, 12, 31),
+        $gte: new Date(sale_year, 0, 1),
+        $lte: new Date(sale_year, 11, 31),
       };
     }
     const schema = Lien.find(query);
@@ -177,6 +179,53 @@ const Query = {
       search_fee: 'Number',
     };
     return { fields, data };
+  },
+  getTownships: () => {
+    return Lien.distinct('county');
+  },
+  getVintages: () => {
+    return Lien.distinct('year');
+  },
+  getLLCs: () => {
+    return Lien.distinct('llc');
+  },
+  getMonthlyRedemptions: async (
+    parent,
+    { year, month, county },
+    context,
+    info
+  ) => {
+    const query = {
+      redemption_date: {
+        $gte: new Date(year, month - 1, 1),
+        $lt: new Date(year, month, 1),
+      },
+    };
+    if (county) {
+      query.county = county;
+    }
+    return Lien.find(query);
+  },
+  getMonthlySubPayments: async (
+    parent,
+    { year, month, county },
+    context,
+    info
+  ) => {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    const query = {
+      'subs.sub_date': { $gte: start, $lt: end },
+    };
+    if (county) {
+      query.county = county;
+    }
+    const response = await Lien.aggregate([
+      { $unwind: '$subs' },
+      { $match: query },
+      { $project: { _id: 0 } },
+    ]);
+    return response;
   },
 };
 
