@@ -1,4 +1,5 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { ApolloServer } from 'apollo-server-express';
@@ -6,8 +7,10 @@ import { importSchema } from 'graphql-import';
 import resolvers from './resolvers';
 import cors from 'cors';
 import io from './socket';
-
+import authRoutes from './routes/auth';
 import reportRoutes from './routes/reports';
+import isAuth from './middleware/isAuth';
+import is404 from './middleware/is404';
 
 dotenv.config();
 
@@ -16,7 +19,10 @@ const server = new ApolloServer({ typeDefs, resolvers, playground: true });
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json());
+app.use(authRoutes);
 app.use(reportRoutes);
+// app.use(is404, isAuth);
 app.use((error, req, res, next) => {
   const { data, message } = error;
   const status = error.statusCode || 500;
