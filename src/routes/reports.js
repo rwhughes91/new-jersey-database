@@ -30,6 +30,6 @@ const upload = multer({ storage, fileFilter }).single('file');
 const router = express.Router();
 
 router.get('/upload', isAuth, reportsController.getUpload);
-router.put('/upload', isAuth, upload, reportsController.postUpload);
+router.put('/upload', isAuth, upload, reportsController.putUpload);
 
 export default router;

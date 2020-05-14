@@ -5,7 +5,7 @@ export default (req, res, next) => {
   if (!authHeader) {
     const error = new Error('Not authorized');
     error.statusCode = 401;
-    throw error;
+    throw err;
   }
   const token = authHeader.split(' ')[1];
   let decodedToken;
@@ -20,6 +20,6 @@ export default (req, res, next) => {
     error.statusCode = 401;
     throw error;
   }
-  req.userId = decodedToken.useId;
+  req.userId = decodedToken.userId;
   next();
 };

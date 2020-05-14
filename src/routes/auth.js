@@ -26,4 +26,12 @@ router.put(
 
 router.post('/login', authController.login);
 
+router.post('/reset', authController.passwordReset);
+router.post('/reset/validate_token', authController.validateToken);
+router.post(
+  '/reset_password',
+  body('password').trim().isLength({ min: 5 }),
+  authController.resetPassword
+);
+
 export default router;

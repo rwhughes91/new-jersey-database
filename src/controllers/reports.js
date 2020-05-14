@@ -19,14 +19,23 @@ export const getUpload = (req, res, next) => {
   return res.json('No lien error log file saved');
 };
 
-export const postUpload = (req, res, next) => {
+export const putUpload = (req, res, next) => {
   if (!req.file) {
     const error = new Error('Xlsx file is required');
     error.statusCode = 400;
     throw error;
   }
   const filePath = path.join(mainPath, 'uploads', 'lastLienUpload.xlsx');
-  const headersWorkbook = XLSX.readFile(filePath, { sheetRows: 1 });
+  let headersWorkbook;
+  try {
+    headersWorkbook = XLSX.readFile(filePath, { sheetRows: 1 });
+  } catch (err) {
+    const error = new Error(
+      'Could not read excel file -- please make sure the columns/data are correct'
+    );
+    error.statusCode = 400;
+    throw error;
+  }
   if (!headersWorkbook.SheetNames.find((sheetName) => sheetName === 'data')) {
     const error = new Error(`The liens data must have a sheet name of 'data'`);
     error.statusCode = 400;
