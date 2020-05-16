@@ -5,8 +5,6 @@ import User from '../models/user';
 import crypto from 'crypto';
 import sgMail from '@sendgrid/mail';
 
-let a = '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';
-
 export const signUp = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -45,7 +43,6 @@ export const signUp = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  console.log(req.get('host'));
   try {
     const email = req.body.email;
     const password = req.body.password;
@@ -57,7 +54,7 @@ export const login = async (req, res, next) => {
     }
     const isEqual = await bcrypt.compare(password, user.password);
     if (!isEqual) {
-      const error = new Error('Wrong password');
+      const error = new Error('Incorrect credentials');
       error.statusCode = 401;
       throw error;
     }
@@ -112,7 +109,7 @@ export const passwordReset = async (req, res, next) => {
         subject: 'Password Reset',
         html: `
         <p>Click the link below to reset your password</p>
-        <a href="http://localhost:3000/password_reset/${token}">Reset</a>
+        <a href="http://localhost:3000/auth/password_reset/${token}">Reset</a>
       `,
       });
     } catch (err) {
