@@ -11,17 +11,51 @@ import authRoutes from './routes/auth';
 import reportRoutes from './routes/reports';
 import isAuth from './middleware/isAuth';
 import is404 from './middleware/is404';
+import aws from 'aws-sdk';
+import multer from 'multer';
+import multerS3 from 'multer-s3';
+import S3 from './middleware/s3';
 
 dotenv.config();
 
 const typeDefs = importSchema('./src/schema.graphql');
 const server = new ApolloServer({ typeDefs, resolvers, playground: true });
 
+const s3 = new aws.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype ===
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.BUCKET_NAME,
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      cb(null, 'lastLienUpload.xlsx');
+    },
+  }),
+  fileFilter,
+});
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(authRoutes);
-app.use(reportRoutes);
+app.use(S3(s3), upload.single('file'), reportRoutes);
 app.use(is404, isAuth);
 app.use((error, req, res, next) => {
   const { data, message } = error;

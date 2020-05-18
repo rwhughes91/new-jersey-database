@@ -1,22 +1,26 @@
 import * as XLSX from 'xlsx';
 import io from '../socket';
 import Lien from '../models/lien';
-import mainPath from '../utils/path';
-import path from 'path';
-import fs from 'fs';
 
 export const getUpload = (req, res, next) => {
-  const filePath = path.join(mainPath, 'uploads', 'lastUploadLienErrors.xlsx');
-  try {
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath, 'errorLogs.xlsx');
+  req.s3.getObject(
+    { Bucket: process.env.BUCKET_NAME, Key: 'lastUploadLienErrors.xlsx' },
+    (err, data) => {
+      try {
+        if (err) {
+          const error = new Error('Could not download error log');
+          error.statusCode(500);
+          throw error;
+        }
+        return res.send(data.Body);
+      } catch (err) {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      }
     }
-  } catch (err) {
-    const error = new Error('Could not download file');
-    error.statusCode = 500;
-    throw error;
-  }
-  return res.json('No lien error log file saved');
+  );
 };
 
 export const putUpload = (req, res, next) => {
@@ -25,48 +29,90 @@ export const putUpload = (req, res, next) => {
     error.statusCode = 400;
     throw error;
   }
-  const filePath = path.join(mainPath, 'uploads', 'lastLienUpload.xlsx');
-  let headersWorkbook;
-  try {
-    headersWorkbook = XLSX.readFile(filePath, { sheetRows: 1 });
-  } catch (err) {
-    const error = new Error(
-      'Could not read excel file -- please make sure the columns/data are correct'
-    );
-    error.statusCode = 400;
-    throw error;
-  }
-  if (!headersWorkbook.SheetNames.find((sheetName) => sheetName === 'data')) {
-    const error = new Error(`The liens data must have a sheet name of 'data'`);
-    error.statusCode = 400;
-    throw error;
-  }
-  const headersArray = XLSX.utils.sheet_to_json(headersWorkbook.Sheets.data, {
-    header: 1,
-  })[0];
-  for (let header of headersArray) {
-    if (!typeDefs.hasOwnProperty(header)) {
-      const error = new Error(`Incorrect headers. ${header} is missing`);
-      error.statusCode = 400;
-      throw error;
+  req.s3.getObject(
+    { Bucket: process.env.BUCKET_NAME, Key: 'lastLienUpload.xlsx' },
+    (err, data) => {
+      try {
+        if (err) {
+          const error = new Error('Upload error. Please try again');
+          error.statusCode(500);
+          throw error;
+        }
+        let headersWorkbook;
+        try {
+          headersWorkbook = XLSX.read(data.Body, {
+            type: 'buffer',
+            sheetRows: 1,
+          });
+        } catch (err) {
+          const error = new Error(
+            'Could not read excel file -- please make sure the columns are correct'
+          );
+          error.statusCode = 400;
+          throw error;
+        }
+        if (
+          !headersWorkbook.SheetNames.find((sheetName) => sheetName === 'data')
+        ) {
+          const error = new Error(
+            `The liens data must have a sheet name of 'data'`
+          );
+          error.statusCode = 400;
+          throw error;
+        }
+        let headersArray;
+        try {
+          headersArray = XLSX.utils.sheet_to_json(headersWorkbook.Sheets.data, {
+            header: 1,
+          })[0];
+        } catch (err) {
+          const error = new Error(
+            'Could not read your excel file -- please make sure the data are correct'
+          );
+          error.statusCode = 400;
+          throw error;
+        }
+        try {
+          for (let header of headersArray) {
+            if (!typeDefs.hasOwnProperty(header)) {
+              throw Error;
+            }
+          }
+        } catch (err) {
+          const error = new Error(
+            `Incorrect headers. See columns for requirements`
+          );
+          error.statusCode = 400;
+          throw error;
+        }
+        const ioServer = io.getIO();
+        ioServer.uploading = true;
+        ioServer.io.emit('uploadBegin');
+        validateData(data.Body, req.s3)
+          .then(() => {
+            ioServer.uploading = false;
+            ioServer.io.emit('uploadDone', {
+              success: true,
+              errorMessage: null,
+            });
+          })
+          .catch((err) => {
+            ioServer.uploading = false;
+            ioServer.io.emit('uploadDone', {
+              success: false,
+              errorMessage: 'Could not read file',
+            });
+            throw err;
+          });
+        return res.status(200).json('uploading');
+      } catch (err) {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      }
     }
-  }
-  const ioServer = io.getIO();
-  ioServer.uploading = true;
-  ioServer.io.emit('uploadBegin');
-  validateData(filePath)
-    .then(() => {
-      ioServer.uploading = false;
-      ioServer.io.emit('uploadDone', { success: true, errorMessage: null });
-    })
-    .catch(() => {
-      ioServer.uploading = false;
-      ioServer.io.emit('uploadDone', {
-        success: false,
-        errorMessage: 'Could not read file',
-      });
-    });
-  return res.status(200).json('uploading');
+  );
 };
 
 const typeDefs = {
@@ -96,8 +142,8 @@ const typeDefs = {
   search_fee: Number,
 };
 
-const validateData = async (file) => {
-  const workbook = XLSX.readFile(file);
+const validateData = async (data, s3) => {
+  const workbook = XLSX.read(data, { type: 'buffer' });
   const maxLienId = await Lien.aggregate([
     {
       $group: { _id: null, max: { $max: '$lien_id' } },
@@ -145,9 +191,20 @@ const validateData = async (file) => {
       Sheets: { errors: errorsWorksheet },
       SheetNames: ['errors'],
     };
-    XLSX.writeFile(
-      errorsWorkbook,
-      path.join(mainPath, 'uploads', 'lastUploadLienErrors.xlsx')
+    const errorLogXlsx = XLSX.write(errorsWorkbook, { type: 'buffer' });
+    await s3.upload(
+      {
+        Bucket: process.env.BUCKET_NAME,
+        Key: 'lastUploadLienErrors.xlsx',
+        Body: errorLogXlsx,
+      },
+      (err) => {
+        if (err) {
+          const error = new Error('Could not upload error log');
+          error.statusCode(500);
+          throw error;
+        }
+      }
     );
   }
 };
