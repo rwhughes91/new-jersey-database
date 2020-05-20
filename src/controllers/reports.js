@@ -142,7 +142,7 @@ const typeDefs = {
   search_fee: Number,
 };
 
-const validateData = async (data, s3) => {
+export const validateData = async (data, s3) => {
   const workbook = XLSX.read(data, { type: 'buffer' });
   const maxLienId = await Lien.aggregate([
     {

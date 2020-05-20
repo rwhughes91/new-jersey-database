@@ -2,45 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { validationResult } from 'express-validator';
 import User from '../models/user';
-import crypto from 'crypto';
 import sgMail from '@sendgrid/mail';
-
-export const signUp = async (req, res, next) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const error = new Error('Validation failed.');
-      error.statusCode = 422;
-      error.data = errors.array();
-      throw error;
-    }
-    const email = req.body.email;
-    const password = req.body.password;
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = new User({ email, password: hashedPassword });
-    const result = await newUser.save();
-
-    const token = jwt.sign(
-      {
-        email: result.email,
-        userId: result._id.toString(),
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: '1h' }
-    );
-    res.status(201).json({
-      message: 'User created',
-      token,
-      userId: result._id.toString(),
-      expiresIn: 3600,
-    });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
 
 export const login = async (req, res, next) => {
   try {
@@ -53,6 +15,7 @@ export const login = async (req, res, next) => {
       throw error;
     }
     const isEqual = await bcrypt.compare(password, user.password);
+
     if (!isEqual) {
       const error = new Error('Incorrect credentials');
       error.statusCode = 401;
@@ -66,7 +29,7 @@ export const login = async (req, res, next) => {
       process.env.SECRET_KEY,
       { expiresIn: '1h' }
     );
-    res
+    return res
       .status(200)
       .json({ token, userId: user._id.toString(), expiresIn: 3600 });
   } catch (err) {
@@ -74,6 +37,7 @@ export const login = async (req, res, next) => {
       err.statusCode = 500;
     }
     next(err);
+    return err;
   }
 };
 
@@ -108,9 +72,9 @@ export const passwordReset = async (req, res, next) => {
         from: 'info@njtldatabase.com',
         subject: 'Password Reset',
         html: `
-        <p>Click the link below to reset your password</p>
-        <a href="http://localhost:3000/auth/password_reset/${token}">Reset</a>
-      `,
+            <p>Click the link below to reset your password</p>
+            <a href="http://localhost:3000/auth/password_reset/${token}">Reset</a>
+            `,
       });
     } catch (err) {
       const error = new Error('Could not send the email');
@@ -217,6 +181,43 @@ export const resetPassword = async (req, res, next) => {
     user.resetTokenExpiration = undefined;
     await user.save();
     res.status(200).json({ message: 'Password Updated' });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+export const signUp = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation failed.');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    const email = req.body.email;
+    const password = req.body.password;
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const newUser = new User({ email, password: hashedPassword });
+    const result = await newUser.save();
+
+    const token = jwt.sign(
+      {
+        email: result.email,
+        userId: result._id.toString(),
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+    res.status(201).json({
+      message: 'User created',
+      token,
+      userId: result._id.toString(),
+      expiresIn: 3600,
+    });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

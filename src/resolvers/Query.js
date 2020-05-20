@@ -64,6 +64,7 @@ const Query = {
         $lte: new Date(sale_year, 11, 31),
       };
     }
+    console.log(query);
     const schema = Lien.find(query);
     const queryTemplate = schema.toConstructor();
     return Promise.join(

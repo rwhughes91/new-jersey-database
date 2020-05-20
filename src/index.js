@@ -65,25 +65,29 @@ app.use((error, req, res, next) => {
 
 server.applyMiddleware({ app });
 
-mongoose
-  .connect(process.env.DB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    const server = app.listen({ port: 4000 });
-    const serverIO = io.init(server);
-    serverIO.on('connection', (socket) => {
-      console.log('Client has been connected');
-      socket.on('getUploadState', () => {
-        const { uploading } = io.getIO();
-        socket.emit('uploadingState', { uploading });
+if (process.env.NODE_ENV !== 'test') {
+  mongoose
+    .connect(process.env.DB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
+    .then(() => {
+      const server = app.listen({ port: 4000 });
+      const serverIO = io.init(server);
+      serverIO.on('connection', (socket) => {
+        console.log('Client has been connected');
+        socket.on('getUploadState', () => {
+          const { uploading } = io.getIO();
+          socket.emit('uploadingState', { uploading });
+        });
+        socket.on('disconnect', () => {
+          console.log('Client has been disconnected');
+        });
       });
-      socket.on('disconnect', () => {
-        console.log('Client has been disconnected');
-      });
+    })
+    .catch((err) => {
+      console.log(err);
     });
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+}
+
+export default app;
