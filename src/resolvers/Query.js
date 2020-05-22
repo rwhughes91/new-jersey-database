@@ -64,7 +64,6 @@ const Query = {
         $lte: new Date(sale_year, 11, 31),
       };
     }
-    console.log(query);
     const schema = Lien.find(query);
     const queryTemplate = schema.toConstructor();
     return Promise.join(
@@ -227,6 +226,159 @@ const Query = {
       { $project: { _id: 0 } },
     ]);
     return response;
+  },
+  getDashboardData: async (parent, { county }, context, info) => {
+    const query = {};
+    if (county) query.county = county;
+    const summaryData = Lien.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          totalCashOut: { $sum: '$total_cash_out' },
+          totalCashIn: { $sum: '$total_cash_received' },
+        },
+      },
+    ]);
+    const typeAggregationData = Lien.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $group: {
+          _id: {
+            year: '$year',
+            status: '$status',
+            type: '$lien_type',
+          },
+          year: { $first: '$year' },
+          status: { $first: '$status' },
+          type: { $first: '$lien_type' },
+          sum: { $sum: '$tax_amount' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $facet: {
+          aggByYearStatusType: [
+            {
+              $sort: {
+                year: 1,
+              },
+            },
+          ],
+          aggByStatus: [
+            {
+              $group: {
+                _id: '$status',
+                status: { $first: '$status' },
+                sum: { $sum: '$sum' },
+                count: { $sum: '$count' },
+              },
+            },
+            {
+              $sort: {
+                status: 1,
+              },
+            },
+          ],
+          aggByType: [
+            {
+              $group: {
+                _id: '$type',
+                type: { $first: '$type' },
+                sum: { $sum: '$sum' },
+                count: { $sum: '$count' },
+              },
+            },
+            {
+              $sort: {
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+    const monthlyRedemptionData = Lien.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $facet: {
+          redemptionsAndCashFlow: [
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: '%Y-%m',
+                    date: '$redemption_date',
+                  },
+                },
+                date: {
+                  $first: {
+                    $dateToString: {
+                      format: '%Y-%m',
+                      date: '$redemption_date',
+                    },
+                  },
+                },
+                count: { $sum: 1 },
+                redemptionAmount: { $sum: '$redemption_amount' },
+                totalCashOut: { $sum: '$total_cash_out' },
+                totalCashIn: { $sum: '$total_cash_received' },
+              },
+            },
+            {
+              $sort: {
+                date: 1,
+              },
+            },
+          ],
+          monthlySubData: [
+            { $unwind: '$subs' },
+            {
+              $group: {
+                _id: {
+                  $dateToString: { format: '%Y-%m', date: '$subs.sub_date' },
+                },
+                date: {
+                  $first: {
+                    $dateToString: {
+                      format: '%Y-%m',
+                      date: '$subs.sub_date',
+                    },
+                  },
+                },
+                count: { $sum: 1 },
+                subAmount: { $sum: '$subs.sub_amount' },
+              },
+            },
+            {
+              $sort: {
+                date: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+    return Promise.join(
+      summaryData.exec(),
+      typeAggregationData.exec(),
+      monthlyRedemptionData.exec(),
+      (summaryData, typeAggregationData, monthlyRedemptionData) => {
+        return {
+          county: county ? county : null,
+          summaryData: summaryData[0],
+          typeAggregationData: typeAggregationData[0],
+          monthlyRedemptionData: monthlyRedemptionData[0],
+        };
+      }
+    );
   },
 };
 

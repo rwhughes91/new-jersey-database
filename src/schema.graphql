@@ -34,6 +34,7 @@ type Query {
   getLLCs: [String!]!
   getMonthlyRedemptions(year: Int!, month: Int!, county: String): [Lien!]!
   getMonthlySubPayments(year: Int!, month: Int!, county: String): [Lien!]!
+  getDashboardData(county: String): DashboardData!
 }
 
 type Mutation {
@@ -173,6 +174,62 @@ type Sub {
   sub_type: String
   sub_date: String
   total: Float
+}
+
+type DashboardData {
+  county: String
+  summaryData: SummaryData!
+  typeAggregationData: AggregationData!
+  monthlyRedemptionData: MonthlyRedemptionData!
+}
+
+type MonthlyRedemptionData {
+  redemptionsAndCashFlow: [RedemptionAndCashFlowData]!
+  monthlySubData: [MonthlySubData]!
+}
+
+type RedemptionAndCashFlowData {
+  date: String
+  count: Int!
+  redemptionAmount: Float!
+  totalCashOut: Float!
+  totalCashIn: Float!
+}
+
+type MonthlySubData {
+  date: String
+  count: Int!
+  subAmount: Float!
+}
+
+type SummaryData {
+  count: Int!
+  totalCashOut: Float!
+  totalCashIn: Float!
+}
+
+type AggregationData {
+  aggByYearStatusType: [AggByYearStatusType!]!
+  aggByStatus: [AggByStatus!]!
+  aggByType: [AggByType!]!
+}
+
+type AggByYearStatusType {
+  year: Int!
+  status: String
+  type: String
+  sum: Float!
+  count: Int!
+}
+type AggByStatus {
+  status: String
+  sum: Float!
+  count: Int!
+}
+type AggByType {
+  type: String
+  sum: Float!
+  count: Int!
 }
 
 input LienUpdateData {
