@@ -212,6 +212,7 @@ type AggregationData {
   aggByYearStatusType: [AggByYearStatusType!]!
   aggByStatus: [AggByStatus!]!
   aggByType: [AggByType!]!
+  aggByYear: [AggByYear!]!
 }
 
 type AggByYearStatusType {
@@ -228,6 +229,12 @@ type AggByStatus {
 }
 type AggByType {
   type: String
+  sum: Float!
+  count: Int!
+}
+
+type AggByYear {
+  year: Int
   sum: Float!
   count: Int!
 }

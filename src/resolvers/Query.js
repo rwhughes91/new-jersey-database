@@ -300,6 +300,21 @@ const Query = {
               },
             },
           ],
+          aggByYear: [
+            {
+              $group: {
+                _id: '$year',
+                year: { $first: '$year' },
+                sum: { $sum: '$sum' },
+                count: { $sum: '$count' },
+              },
+            },
+            {
+              $sort: {
+                year: 1,
+              },
+            },
+          ],
         },
       },
     ]);
@@ -314,20 +329,20 @@ const Query = {
               $group: {
                 _id: {
                   $dateToString: {
-                    format: '%Y-%m',
+                    format: '%Y',
                     date: '$redemption_date',
                   },
                 },
                 date: {
                   $first: {
                     $dateToString: {
-                      format: '%Y-%m',
+                      format: '%Y',
                       date: '$redemption_date',
                     },
                   },
                 },
                 count: { $sum: 1 },
-                redemptionAmount: { $sum: '$redemption_amount' },
+                redemptionAmount: { $sum: '$tax_amount' },
                 totalCashOut: { $sum: '$total_cash_out' },
                 totalCashIn: { $sum: '$total_cash_received' },
               },
@@ -343,18 +358,18 @@ const Query = {
             {
               $group: {
                 _id: {
-                  $dateToString: { format: '%Y-%m', date: '$subs.sub_date' },
+                  $dateToString: { format: '%Y', date: '$subs.sub_date' },
                 },
                 date: {
                   $first: {
                     $dateToString: {
-                      format: '%Y-%m',
+                      format: '%Y',
                       date: '$subs.sub_date',
                     },
                   },
                 },
                 count: { $sum: 1 },
-                subAmount: { $sum: '$subs.sub_amount' },
+                subAmount: { $sum: '$subs.total' },
               },
             },
             {
