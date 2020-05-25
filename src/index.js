@@ -56,7 +56,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(authRoutes);
 app.use(S3(s3), upload.single('file'), reportRoutes);
-// app.use(is404, isAuth);
+app.use(is404, isAuth);
 app.use((error, req, res, next) => {
   const { data, message } = error;
   const status = error.statusCode || 500;
