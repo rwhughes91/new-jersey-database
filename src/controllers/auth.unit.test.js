@@ -34,7 +34,7 @@ describe('Auth Controller', () => {
       .catch((err) => {
         throw err;
       });
-  });
+  }, 30000);
   afterAll((done) => {
     User.deleteMany({}).then(() => {
       return mongoose.disconnect().then(() => {

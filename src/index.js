@@ -72,7 +72,9 @@ if (process.env.NODE_ENV !== 'test') {
       useUnifiedTopology: true,
     })
     .then(() => {
-      const server = app.listen({ port: 4000 });
+      const server = app.listen({
+        port: process.env.PORT ? process.env.PORT : 4000,
+      });
       const serverIO = io.init(server);
       serverIO.on('connection', (socket) => {
         console.log('Client has been connected');
